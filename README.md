@@ -111,6 +111,3 @@ For complete variable documentation, see `defaults/main.yml`.
 
 Apache 2.0
 
-## Author
-
-svosadtsia
