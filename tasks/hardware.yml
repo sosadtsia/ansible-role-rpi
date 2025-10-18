@@ -1,0 +1,117 @@
+---
+# Hardware configuration tasks (boot config)
+
+- name: Check if /boot/config.txt exists
+  ansible.builtin.stat:
+    path: /boot/config.txt
+  register: boot_config_legacy
+
+- name: Check if /boot/firmware/config.txt exists
+  ansible.builtin.stat:
+    path: /boot/firmware/config.txt
+  register: boot_config_firmware
+
+- name: Set boot config path
+  ansible.builtin.set_fact:
+    rpi_boot_config_path: "{{ '/boot/firmware/config.txt' if boot_config_firmware.stat.exists else '/boot/config.txt' }}"
+
+- name: Display boot config path
+  ansible.builtin.debug:
+    msg: "Using boot config at: {{ rpi_boot_config_path }}"
+
+- name: Backup boot config
+  ansible.builtin.copy:
+    src: "{{ rpi_boot_config_path }}"
+    dest: "{{ rpi_boot_config_path }}.backup.{{ ansible_date_time.iso8601_basic_short }}"
+    remote_src: true
+    mode: preserve
+  changed_when: false
+
+- name: Configure GPU memory
+  ansible.builtin.lineinfile:
+    path: "{{ rpi_boot_config_path }}"
+    regexp: '^gpu_mem='
+    line: "gpu_mem={{ rpi_gpu_mem }}"
+    state: present
+  when: rpi_configure_gpu_mem
+  notify: reboot system
+
+- name: Configure ARM frequency (overclocking)
+  ansible.builtin.lineinfile:
+    path: "{{ rpi_boot_config_path }}"
+    regexp: '^arm_freq='
+    line: "arm_freq={{ rpi_arm_freq }}"
+    state: present
+  when: rpi_overclock
+  notify: reboot system
+
+- name: Configure GPU frequency (overclocking)
+  ansible.builtin.lineinfile:
+    path: "{{ rpi_boot_config_path }}"
+    regexp: '^gpu_freq='
+    line: "gpu_freq={{ rpi_gpu_freq }}"
+    state: present
+  when: rpi_overclock
+  notify: reboot system
+
+- name: Enable I2C interface
+  ansible.builtin.lineinfile:
+    path: "{{ rpi_boot_config_path }}"
+    regexp: '^#?dtparam=i2c_arm='
+    line: "dtparam=i2c_arm=on"
+    state: present
+  when: rpi_enable_i2c
+  notify: reboot system
+
+- name: Load I2C kernel module
+  ansible.builtin.lineinfile:
+    path: /etc/modules
+    line: "i2c-dev"
+    state: present
+  when: rpi_enable_i2c
+
+- name: Enable SPI interface
+  ansible.builtin.lineinfile:
+    path: "{{ rpi_boot_config_path }}"
+    regexp: '^#?dtparam=spi='
+    line: "dtparam=spi=on"
+    state: present
+  when: rpi_enable_spi
+  notify: reboot system
+
+- name: Enable camera interface
+  ansible.builtin.lineinfile:
+    path: "{{ rpi_boot_config_path }}"
+    regexp: '^#?start_x='
+    line: "start_x=1"
+    state: present
+  when: rpi_enable_camera
+  notify: reboot system
+
+- name: Enable serial console
+  ansible.builtin.lineinfile:
+    path: "{{ rpi_boot_config_path }}"
+    regexp: '^#?enable_uart='
+    line: "enable_uart=1"
+    state: present
+  when: rpi_enable_serial
+  notify: reboot system
+
+- name: Enable 1-Wire interface
+  ansible.builtin.lineinfile:
+    path: "{{ rpi_boot_config_path }}"
+    regexp: '^#?dtoverlay=w1-gpio'
+    line: "dtoverlay=w1-gpio"
+    state: present
+  when: rpi_enable_1wire
+  notify: reboot system
+
+- name: Load 1-Wire kernel modules
+  ansible.builtin.lineinfile:
+    path: /etc/modules
+    line: "{{ item }}"
+    state: present
+  loop:
+    - w1-gpio
+    - w1-therm
+  when: rpi_enable_1wire

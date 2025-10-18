@@ -1,0 +1,19 @@
+---
+# Test playbook for ansible-role-rpi
+
+- hosts: localhost
+  remote_user: root
+  become: true
+  roles:
+    - ansible-role-rpi
+  vars:
+    rpi_update_cache: true
+    rpi_upgrade_type: "safe"
+    rpi_essential_packages:
+      - curl
+      - wget
+      - git
+      - vim
+    rpi_enable_ufw: false
+    rpi_enable_fail2ban: false
+    rpi_configure_ssh: false

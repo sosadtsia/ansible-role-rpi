@@ -1,0 +1,58 @@
+---
+# Reboot check tasks
+
+- name: Check if reboot is required
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+
+- name: Display reboot requirement status
+  ansible.builtin.debug:
+    msg: "Reboot is required to complete system updates"
+  when: reboot_required.stat.exists
+
+- name: Check what packages require reboot
+  ansible.builtin.command: cat /var/run/reboot-required.pkgs
+  register: reboot_packages
+  when: reboot_required.stat.exists
+  changed_when: false
+  failed_when: false
+
+- name: Display packages requiring reboot
+  ansible.builtin.debug:
+    var: reboot_packages.stdout_lines
+  when:
+    - reboot_required.stat.exists
+    - reboot_packages.rc == 0
+
+- name: Reboot system if required and auto-reboot is enabled
+  ansible.builtin.reboot:
+    msg: "Rebooting system to complete updates"
+    reboot_timeout: 300
+    post_reboot_delay: 30
+  when:
+    - reboot_required.stat.exists
+    - rpi_auto_reboot
+
+- name: Wait for system to become reachable
+  ansible.builtin.wait_for_connection:
+    delay: 10
+    timeout: 300
+  when:
+    - reboot_required.stat.exists
+    - rpi_auto_reboot
+
+- name: Gather facts after reboot
+  ansible.builtin.setup:
+  when:
+    - reboot_required.stat.exists
+    - rpi_auto_reboot
+
+- name: Display system information
+  ansible.builtin.debug:
+    msg:
+      - "Hostname: {{ ansible_hostname }}"
+      - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+      - "Kernel: {{ ansible_kernel }}"
+      - "Architecture: {{ ansible_architecture }}"
+      - "Uptime: {{ ansible_uptime_seconds | int // 60 }} minutes"

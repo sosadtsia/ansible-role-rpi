@@ -1,0 +1,86 @@
+---
+# tasks file for ansible-role-rpi
+
+- name: Include system update tasks
+  ansible.builtin.include_tasks: system-update.yml
+  tags:
+    - rpi
+    - system
+    - update
+
+- name: Include package management tasks
+  ansible.builtin.include_tasks: packages.yml
+  tags:
+    - rpi
+    - packages
+
+- name: Include system configuration tasks
+  ansible.builtin.include_tasks: system-config.yml
+  tags:
+    - rpi
+    - config
+
+- name: Include SSH configuration tasks
+  ansible.builtin.include_tasks: ssh.yml
+  when: rpi_configure_ssh
+  tags:
+    - rpi
+    - ssh
+    - security
+
+- name: Include firewall configuration tasks
+  ansible.builtin.include_tasks: firewall.yml
+  when: rpi_enable_ufw
+  tags:
+    - rpi
+    - firewall
+    - security
+
+- name: Include fail2ban configuration tasks
+  ansible.builtin.include_tasks: fail2ban.yml
+  when: rpi_enable_fail2ban
+  tags:
+    - rpi
+    - fail2ban
+    - security
+
+- name: Include user management tasks
+  ansible.builtin.include_tasks: users.yml
+  when: rpi_users | length > 0
+  tags:
+    - rpi
+    - users
+
+- name: Include Docker installation tasks
+  ansible.builtin.include_tasks: docker.yml
+  when: rpi_install_docker
+  tags:
+    - rpi
+    - docker
+
+- name: Include hardware configuration tasks
+  ansible.builtin.include_tasks: hardware.yml
+  when: >
+    rpi_configure_gpu_mem or
+    rpi_overclock or
+    rpi_enable_i2c or
+    rpi_enable_spi or
+    rpi_enable_camera or
+    rpi_enable_serial or
+    rpi_enable_1wire
+  tags:
+    - rpi
+    - hardware
+
+- name: Include GPIO configuration tasks
+  ansible.builtin.include_tasks: gpio.yml
+  when: rpi_install_gpio_packages or rpi_add_users_to_gpio
+  tags:
+    - rpi
+    - gpio
+
+- name: Include reboot check tasks
+  ansible.builtin.include_tasks: reboot.yml
+  tags:
+    - rpi
+    - reboot

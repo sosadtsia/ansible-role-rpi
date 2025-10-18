@@ -1,0 +1,45 @@
+---
+# Example playbook for Raspberry Pi management
+
+- name: Basic Raspberry Pi setup
+  hosts: raspberry_pis
+  become: true
+  roles:
+    - ansible-role-rpi
+
+- name: Production Raspberry Pi configuration
+  hosts: production_rpis
+  become: true
+  roles:
+    - role: ansible-role-rpi
+      vars:
+        rpi_hostname: "{{ inventory_hostname }}"
+        rpi_set_hostname: true
+        rpi_timezone: "America/New_York"
+        rpi_upgrade_type: "safe"
+        rpi_enable_ufw: true
+        rpi_ufw_allow_ports:
+          - "22/tcp"
+        rpi_enable_fail2ban: true
+        rpi_ssh_password_authentication: "no"
+        rpi_enable_unattended_upgrades: true
+        rpi_configure_gpu_mem: true
+        rpi_gpu_mem: 16
+
+- name: Development Raspberry Pi configuration
+  hosts: development_rpis
+  become: true
+  roles:
+    - role: ansible-role-rpi
+      vars:
+        rpi_install_docker: true
+        rpi_install_gpio_packages: true
+        rpi_enable_i2c: true
+        rpi_enable_spi: true
+        rpi_additional_packages:
+          - build-essential
+          - python3-pip
+          - python3-venv
+        rpi_docker_users:
+          - "{{ ansible_user }}"
+

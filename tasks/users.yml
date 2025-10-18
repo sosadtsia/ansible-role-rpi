@@ -1,0 +1,30 @@
+---
+# User management tasks
+
+- name: Create additional users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ item.groups | default(omit) }}"
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    create_home: true
+    state: present
+  loop: "{{ rpi_users }}"
+  when: rpi_users | length > 0
+
+- name: Add SSH keys for users
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.ssh_key }}"
+    state: present
+  loop: "{{ rpi_users }}"
+  when:
+    - rpi_users | length > 0
+    - item.ssh_key is defined
+
+- name: Disable default pi user
+  ansible.builtin.user:
+    name: pi
+    state: absent
+    remove: true
+    force: true
+  when: rpi_disable_pi_user

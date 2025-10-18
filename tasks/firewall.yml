@@ -1,0 +1,43 @@
+---
+# Firewall (UFW) configuration tasks
+
+- name: Ensure UFW is installed
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Reset UFW to default
+  community.general.ufw:
+    state: reset
+  when: ansible_check_mode is not defined or not ansible_check_mode
+
+- name: Set UFW default policy (deny incoming)
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Set UFW default policy (allow outgoing)
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Allow specific ports through firewall
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.split('/')[0] }}"
+    proto: "{{ item.split('/')[1] }}"
+  loop: "{{ rpi_ufw_allow_ports }}"
+  notify: reload ufw
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+
+- name: Display UFW status
+  ansible.builtin.command: ufw status verbose
+  register: ufw_status
+  changed_when: false
+
+- name: Show UFW status
+  ansible.builtin.debug:
+    var: ufw_status.stdout_lines

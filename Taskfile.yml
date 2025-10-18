@@ -1,0 +1,100 @@
+version: '3'
+
+vars:
+  INVENTORY: '{{.INVENTORY | default ""}}'
+
+tasks:
+  install:
+    desc: Install required Ansible collections
+    cmds:
+      - ansible-galaxy collection install -r requirements.yml
+
+  test:
+    desc: Run test playbook in check mode
+    cmds:
+      - ansible-playbook -i inventory.example tests/test.yml --check --diff
+
+  lint:
+    desc: Lint Ansible files with ansible-lint
+    cmds:
+      - ansible-lint tasks/*.yml handlers/main.yml
+
+  validate:
+    desc: Validate all YAML files
+    cmds:
+      - |
+        find . -name "*.yml" -o -name "*.yaml" | while read file; do
+          ansible-playbook --syntax-check "$file" 2>/dev/null || echo "Error in $file"
+        done
+
+  check:
+    desc: Run playbook in check mode (dry-run)
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} playbook.example.yml --check --diff
+    preconditions:
+      - sh: '[ -n "{{.INVENTORY}}" ]'
+        msg: 'Usage: task check INVENTORY=inventory'
+
+  deploy:
+    desc: Deploy to Raspberry Pis
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} playbook.example.yml
+    preconditions:
+      - sh: '[ -n "{{.INVENTORY}}" ]'
+        msg: 'Usage: task deploy INVENTORY=inventory'
+
+  deploy-prod:
+    desc: Deploy to production with safety checks
+    cmds:
+      - echo "Running check mode first..."
+      - ansible-playbook -i {{.INVENTORY}} playbook.example.yml --check --diff
+      - task: deploy-confirm
+    preconditions:
+      - sh: '[ -n "{{.INVENTORY}}" ]'
+        msg: 'Usage: task deploy-prod INVENTORY=inventory'
+
+  deploy-confirm:
+    internal: true
+    prompt: Continue with deployment?
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} playbook.example.yml
+
+  ping:
+    desc: Test connectivity
+    cmds:
+      - ansible -i {{.INVENTORY}} all -m ping
+    preconditions:
+      - sh: '[ -n "{{.INVENTORY}}" ]'
+        msg: 'Usage: task ping INVENTORY=inventory'
+
+  facts:
+    desc: Gather host facts
+    cmds:
+      - ansible -i {{.INVENTORY}} all -m setup
+    preconditions:
+      - sh: '[ -n "{{.INVENTORY}}" ]'
+        msg: 'Usage: task facts INVENTORY=inventory'
+
+  update:
+    desc: Run only system update tasks
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} playbook.example.yml --tags update
+    preconditions:
+      - sh: '[ -n "{{.INVENTORY}}" ]'
+        msg: 'Usage: task update INVENTORY=inventory'
+
+  security:
+    desc: Run only security hardening tasks
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} playbook.example.yml --tags security
+    preconditions:
+      - sh: '[ -n "{{.INVENTORY}}" ]'
+        msg: 'Usage: task security INVENTORY=inventory'
+
+  clean:
+    desc: Clean up temporary files
+    cmds:
+      - find . -name "*.retry" -delete
+      - find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+      - find . -name "*.pyc" -delete
+      - rm -rf .ansible/

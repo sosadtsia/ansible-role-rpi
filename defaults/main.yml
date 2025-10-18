@@ -1,0 +1,102 @@
+---
+# defaults file for ansible-role-rpi
+
+# System update settings
+rpi_update_cache: true
+rpi_cache_valid_time: 3600  # seconds
+rpi_upgrade_type: "dist"     # Options: dist, full, safe
+rpi_autoremove: true
+rpi_autoclean: true
+
+# Hostname configuration
+rpi_hostname: "{{ inventory_hostname }}"
+rpi_set_hostname: false
+
+# Timezone and locale
+rpi_timezone: "America/New_York"
+rpi_locale: "en_US.UTF-8"
+rpi_set_locale: false
+
+# Essential packages to install
+rpi_essential_packages:
+  - curl
+  - wget
+  - git
+  - vim
+  - htop
+  - ncdu
+  - tree
+  - tmux
+  - ufw
+  - fail2ban
+  - unattended-upgrades
+
+# Additional packages (customize per environment)
+rpi_additional_packages: []
+
+# GPIO and hardware packages (optional)
+rpi_gpio_packages:
+  - python3-gpiozero
+  - python3-rpi.gpio
+  - i2c-tools
+  - python3-smbus
+rpi_install_gpio_packages: false
+
+# Packages to remove
+rpi_packages_to_remove: []
+
+# SSH configuration
+rpi_ssh_port: 22
+rpi_ssh_permit_root_login: "no"
+rpi_ssh_password_authentication: "no"
+rpi_ssh_pubkey_authentication: "yes"
+rpi_configure_ssh: true
+
+# UFW firewall
+rpi_enable_ufw: true
+rpi_ufw_allow_ports:
+  - "22/tcp"
+
+# Fail2ban
+rpi_enable_fail2ban: true
+rpi_fail2ban_maxretry: 5
+rpi_fail2ban_bantime: 3600
+rpi_fail2ban_findtime: 600
+
+# User management
+rpi_users: []
+
+# Disable default pi user (recommended for security)
+rpi_disable_pi_user: false
+
+# Docker installation
+rpi_install_docker: false
+rpi_docker_users:
+  - "{{ ansible_user }}"
+
+# Enable automatic security updates
+rpi_enable_unattended_upgrades: true
+
+# Reboot management
+rpi_auto_reboot: false
+rpi_reboot_time: "03:00"
+
+# Memory split for GPU (useful for headless systems)
+rpi_gpu_mem: 16
+rpi_configure_gpu_mem: false
+
+# Overclocking (use with caution)
+rpi_overclock: false
+rpi_arm_freq: 1500
+rpi_gpu_freq: 500
+
+# Enable hardware interfaces
+rpi_enable_i2c: false
+rpi_enable_spi: false
+rpi_enable_camera: false
+rpi_enable_serial: false
+rpi_enable_1wire: false
+
+# GPIO access permissions
+rpi_gpio_group: "gpio"
+rpi_add_users_to_gpio: true

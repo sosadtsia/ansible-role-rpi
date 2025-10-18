@@ -1,0 +1,24 @@
+# Fail2Ban jail configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+[DEFAULT]
+# Ban settings
+bantime  = {{ rpi_fail2ban_bantime }}
+findtime = {{ rpi_fail2ban_findtime }}
+maxretry = {{ rpi_fail2ban_maxretry }}
+
+# Destination email for alerts
+destemail = root@localhost
+sender = root@localhost
+
+# Ban action
+banaction = iptables-multiport
+action = %(action_)s
+
+[sshd]
+enabled = true
+port    = {{ rpi_ssh_port }}
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
+maxretry = {{ rpi_fail2ban_maxretry }}
+

@@ -1,0 +1,50 @@
+---
+# GPIO configuration tasks
+
+- name: Install GPIO packages
+  ansible.builtin.apt:
+    name: "{{ rpi_gpio_packages }}"
+    state: present
+  when: rpi_install_gpio_packages
+
+- name: Ensure GPIO group exists
+  ansible.builtin.group:
+    name: "{{ rpi_gpio_group }}"
+    state: present
+
+- name: Add current user to GPIO group
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: "{{ rpi_gpio_group }}"
+    append: true
+  when: rpi_add_users_to_gpio
+
+- name: Add additional users to GPIO group
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ rpi_gpio_group }}"
+    append: true
+  loop: "{{ rpi_users }}"
+  when:
+    - rpi_add_users_to_gpio
+    - rpi_users | length > 0
+
+- name: Create udev rule for GPIO access
+  ansible.builtin.copy:
+    dest: /etc/udev/rules.d/99-gpio.rules
+    content: |
+      SUBSYSTEM=="gpio", GROUP="{{ rpi_gpio_group }}", MODE="0660"
+      SUBSYSTEM=="gpio*", PROGRAM="/bin/sh -c '
+      chown -R root:{{ rpi_gpio_group }} /sys/class/gpio &&
+      chmod -R 770 /sys/class/gpio;
+      chown -R root:{{ rpi_gpio_group }} /sys/devices/virtual/gpio &&
+      chmod -R 770 /sys/devices/virtual/gpio'"
+    mode: '0644'
+  notify: reboot system
+
+- name: Display GPIO configuration
+  ansible.builtin.debug:
+    msg:
+      - "GPIO packages installed: {{ rpi_install_gpio_packages }}"
+      - "GPIO group: {{ rpi_gpio_group }}"
+      - "Users added to GPIO group: {{ rpi_add_users_to_gpio }}"

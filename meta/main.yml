@@ -1,0 +1,38 @@
+galaxy_info:
+  role_name: raspberry_pi
+  author: svosadtsia
+  description: Comprehensive Ansible role for managing Raspberry Pi devices (RPi2, RPi3, and newer)
+  company: Personal
+
+  license: Apache-2.0
+
+  min_ansible_version: "2.10"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+
+  galaxy_tags:
+    - raspberry
+    - raspberrypi
+    - rpi
+    - debian
+    - system
+    - security
+    - docker
+    - gpio
+    - hardware
+    - iot
+    - homelab
+
+dependencies: []
+
+collections:
+  - community.general
+  - ansible.posix

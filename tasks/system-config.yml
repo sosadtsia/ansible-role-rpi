@@ -1,0 +1,64 @@
+---
+# System configuration tasks
+
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ rpi_hostname }}"
+  when: rpi_set_hostname
+  notify: reboot system
+
+- name: Update /etc/hosts with new hostname
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1'
+    line: "127.0.1.1       {{ rpi_hostname }}"
+    state: present
+  when: rpi_set_hostname
+
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ rpi_timezone }}"
+  when: rpi_set_locale
+
+- name: Generate locale
+  community.general.locale_gen:
+    name: "{{ rpi_locale }}"
+    state: present
+  when: rpi_set_locale
+
+- name: Set locale
+  ansible.builtin.command: update-locale LANG={{ rpi_locale }}
+  when: rpi_set_locale
+  changed_when: false
+
+- name: Configure unattended upgrades
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: present
+  when: rpi_enable_unattended_upgrades
+
+- name: Enable automatic security updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+      APT::Periodic::AutocleanInterval "7";
+    mode: '0644'
+  when: rpi_enable_unattended_upgrades
+
+- name: Configure unattended upgrades to auto-reboot if needed
+  ansible.builtin.lineinfile:
+    path: /etc/apt/apt.conf.d/50unattended-upgrades
+    regexp: '^//Unattended-Upgrade::Automatic-Reboot '
+    line: 'Unattended-Upgrade::Automatic-Reboot "true";'
+    state: present
+  when: rpi_enable_unattended_upgrades and rpi_auto_reboot
+
+- name: Set unattended upgrades reboot time
+  ansible.builtin.lineinfile:
+    path: /etc/apt/apt.conf.d/50unattended-upgrades
+    regexp: '^//Unattended-Upgrade::Automatic-Reboot-Time'
+    line: 'Unattended-Upgrade::Automatic-Reboot-Time "{{ rpi_reboot_time }}";'
+    state: present
+  when: rpi_enable_unattended_upgrades and rpi_auto_reboot

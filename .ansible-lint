@@ -1,0 +1,26 @@
+---
+# Ansible-lint configuration for ansible-role-rpi
+
+# Skip collection installation (use task install instead)
+offline: true
+
+# Use modern profile
+profile: moderate
+
+# Exclude paths
+exclude_paths:
+  - .cache/
+  - .git/
+  - tests/output/
+  - molecule/
+
+# Skip specific rules if needed
+skip_list:
+  - package-latest  # Allow latest packages for system updates
+  - role-name  # Allow flexible role naming
+
+# Enable/configure specific rules
+warn_list:
+  - experimental  # Warn on experimental features
+  - no-changed-when  # Warn when changed_when is missing
+  - command-instead-of-module  # Suggest modules over commands

@@ -1,0 +1,53 @@
+---
+# System update tasks
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: "{{ rpi_cache_valid_time }}"
+  when: rpi_update_cache
+  register: apt_update_result
+  retries: 3
+  delay: 5
+  until: apt_update_result is success
+
+- name: Upgrade all packages (dist upgrade)
+  ansible.builtin.apt:
+    upgrade: dist
+    autoremove: "{{ rpi_autoremove }}"
+    autoclean: "{{ rpi_autoclean }}"
+  when: rpi_upgrade_type == "dist"
+  register: apt_upgrade_result
+  async: 3600
+  poll: 10
+
+- name: Upgrade all packages (full upgrade)
+  ansible.builtin.apt:
+    upgrade: full
+    autoremove: "{{ rpi_autoremove }}"
+    autoclean: "{{ rpi_autoclean }}"
+  when: rpi_upgrade_type == "full"
+  register: apt_upgrade_result
+  async: 3600
+  poll: 10
+
+- name: Upgrade all packages (safe upgrade)
+  ansible.builtin.apt:
+    upgrade: safe
+    autoremove: "{{ rpi_autoremove }}"
+    autoclean: "{{ rpi_autoclean }}"
+  when: rpi_upgrade_type == "safe"
+  register: apt_upgrade_result
+  async: 3600
+  poll: 10
+
+- name: Remove unnecessary packages
+  ansible.builtin.apt:
+    autoremove: true
+    purge: true
+  when: rpi_autoremove
+
+- name: Display upgrade summary
+  ansible.builtin.debug:
+    msg: "System upgrade completed. Changed: {{ apt_upgrade_result.changed }}"
+  when: apt_upgrade_result is defined

@@ -1,0 +1,29 @@
+---
+# handlers file for ansible-role-rpi
+
+- name: Restart ssh
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
+
+- name: Restart sshd
+  ansible.builtin.service:
+    name: sshd
+    state: restarted
+
+- name: Reload ufw
+  community.general.ufw:
+    state: reloaded
+  when: rpi_enable_ufw
+
+- name: Restart fail2ban
+  ansible.builtin.service:
+    name: fail2ban
+    state: restarted
+  when: rpi_enable_fail2ban
+
+- name: Reboot system
+  ansible.builtin.reboot:
+    msg: "Rebooting system after configuration changes"
+    reboot_timeout: 300
+  when: rpi_auto_reboot

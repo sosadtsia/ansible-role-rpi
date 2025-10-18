@@ -1,0 +1,31 @@
+---
+# Package management tasks
+
+- name: Install essential packages
+  ansible.builtin.apt:
+    name: "{{ rpi_essential_packages }}"
+    state: present
+    update_cache: false
+  register: essential_packages_result
+  retries: 3
+  delay: 5
+  until: essential_packages_result is success
+
+- name: Install additional packages
+  ansible.builtin.apt:
+    name: "{{ rpi_additional_packages }}"
+    state: present
+    update_cache: false
+  when: rpi_additional_packages | length > 0
+  register: additional_packages_result
+  retries: 3
+  delay: 5
+  until: additional_packages_result is success
+
+- name: Remove unwanted packages
+  ansible.builtin.apt:
+    name: "{{ rpi_packages_to_remove }}"
+    state: absent
+    purge: true
+    autoremove: true
+  when: rpi_packages_to_remove | length > 0
